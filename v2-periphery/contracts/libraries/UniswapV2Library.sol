@@ -33,9 +33,11 @@ library UniswapV2Library {
     }
 
     // given some amount of an asset and pair reserves, returns an equivalent amount of the other asset
+    // quote是用来计算一个池子下，你传入一个token，另一个token的数量
     function quote(uint amountA, uint reserveA, uint reserveB) internal pure returns (uint amountB) {
         require(amountA > 0, 'UniswapV2Library: INSUFFICIENT_AMOUNT');
         require(reserveA > 0 && reserveB > 0, 'UniswapV2Library: INSUFFICIENT_LIQUIDITY');
+        // 计算的方式也很简单 就是按照比例存储
         amountB = amountA.mul(reserveB) / reserveA;
     }
 
