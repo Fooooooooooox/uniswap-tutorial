@@ -42,6 +42,7 @@ library UniswapV2Library {
     }
 
     // given an input amount of an asset and pair reserves, returns the maximum output amount of the other asset
+    // 输入一定数量（amountIn）代币A，根据池子中代币余额，能得到多少数量（amountOut）代币B。
     function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) internal pure returns (uint amountOut) {
         require(amountIn > 0, 'UniswapV2Library: INSUFFICIENT_INPUT_AMOUNT');
         require(reserveIn > 0 && reserveOut > 0, 'UniswapV2Library: INSUFFICIENT_LIQUIDITY');
@@ -52,6 +53,7 @@ library UniswapV2Library {
     }
 
     // given an output amount of an asset and pair reserves, returns a required input amount of the other asset
+    // 计算当希望获得一定数量（amountOut）的代币B时，应该输入多少数量（amoutnIn）的代币A。
     function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) internal pure returns (uint amountIn) {
         require(amountOut > 0, 'UniswapV2Library: INSUFFICIENT_OUTPUT_AMOUNT');
         require(reserveIn > 0 && reserveOut > 0, 'UniswapV2Library: INSUFFICIENT_LIQUIDITY');
@@ -61,6 +63,7 @@ library UniswapV2Library {
     }
 
     // performs chained getAmountOut calculations on any number of pairs
+    // 该方法用于计算在使用多个交易对时，输入一定数量（amountIn）的第一种代币，最终能收到多少数量的最后一种代币（amounts）。amounts数组中的第一个元素表示amountIn，最后一个元素表示该目标代币对应的数量。该方法实际上是循环调用getAmountIn方法。
     function getAmountsOut(address factory, uint amountIn, address[] memory path) internal view returns (uint[] memory amounts) {
         require(path.length >= 2, 'UniswapV2Library: INVALID_PATH');
         amounts = new uint[](path.length);
@@ -72,6 +75,7 @@ library UniswapV2Library {
     }
 
     // performs chained getAmountIn calculations on any number of pairs
+    // 与getAmountsOut相对，getAmountsIn用于计算当希望收到一定数量（amountOut）的目标代币，应该分别输入多少数量的中间代币。计算方法也是循环调用getAmountIn。
     function getAmountsIn(address factory, uint amountOut, address[] memory path) internal view returns (uint[] memory amounts) {
         require(path.length >= 2, 'UniswapV2Library: INVALID_PATH');
         amounts = new uint[](path.length);

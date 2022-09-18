@@ -201,7 +201,7 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
     function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {
         // 要求output amount大于0
         require(amount0Out > 0 || amount1Out > 0, 'UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT');
-        // 获取池子里的token数量
+        // 获取池子里的token数量 （调用mint前）
         (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
         // 要求取出的数量小于池子内的总数
         require(amount0Out < _reserve0 && amount1Out < _reserve1, 'UniswapV2: INSUFFICIENT_LIQUIDITY');
@@ -212,13 +212,15 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
         address _token0 = token0;
         address _token1 = token1;
         // 检查to的值不能是token的地址
-        require(to != _token0 && to != _token1, 'UniswapV2: INVALID_TO');、
+        require(to != _token0 && to != _token1, 'UniswapV2: INVALID_TO');
         // 把token转给to地址
+        // 你可能会好奇为什么这里只有池子向用户转账 而没有向池子转账 其实是向池子转账的行为提前被调用了
         if (amount0Out > 0) _safeTransfer(_token0, to, amount0Out); // optimistically transfer tokens
         if (amount1Out > 0) _safeTransfer(_token1, to, amount1Out); // optimistically transfer tokens
         // 如果你传入了data的话，就call一下
         // 这里的call其实是一件很cool的事情，实现了defi合约之间的可组合性（flash loan）
         if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
+        // 拿到此时刻的TokenA和TokenB的余额
         balance0 = IERC20(_token0).balanceOf(address(this));
         balance1 = IERC20(_token1).balanceOf(address(this));
         }
@@ -226,8 +228,10 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
         uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
         require(amount0In > 0 || amount1In > 0, 'UniswapV2: INSUFFICIENT_INPUT_AMOUNT');
         { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
+        //扣除手续费 3%
         uint balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(3));
         uint balance1Adjusted = balance1.mul(1000).sub(amount1In.mul(3));
+        // 验证转账后的余额满足 X*Y >= K的要求
         require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(1000**2), 'UniswapV2: K');
         }
 
